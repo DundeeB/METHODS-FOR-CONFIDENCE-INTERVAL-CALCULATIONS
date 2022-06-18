@@ -75,12 +75,12 @@ def demonstrate_prediction():
     plot_line_noise_and_best_fit(x_vec_w_predicted_x, x_vec, y_true, y_true(x_vec) + epsilon_sampled,
                                  y_hat_w_prediction)
     err_keywargs = {'capsize': 10, 'capthick': 3, 'elinewidth': 3, 'linewidth': 3}
-    sig_from_noise = std_estimator(residuals=y_true(x_vec) + epsilon_sampled - np.polyval(best_fit_params, x_vec),
-                                   dof=2)
-    plt.errorbar(x_prediction, y_hat_w_prediction[-1], yerr=2 * sig_from_noise, c='r',
-                 label='Extrapulated value & range $\\pm 2 \\hat{\\sigma}$', **err_keywargs)
+    plt.errorbar(x_prediction, y_hat_w_prediction[-1], yerr=2 * sigma, c='r',
+                 label='Extrapulated value & range', **err_keywargs)
+    plt.axis('off')
     plt.savefig('Graphs/prediction_for_cover')
 
+    plt.axis('on')
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
