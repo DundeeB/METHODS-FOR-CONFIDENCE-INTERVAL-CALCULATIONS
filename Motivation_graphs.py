@@ -1,48 +1,12 @@
-import numpy as np
 from matplotlib import pyplot as plt
+from regression_package import *
+from working_example_global_parameters import *
 
 default_plt_kwargs = {'linewidth': 3, 'markersize': 20}
 size = 30
 params = {'legend.fontsize': size * 0.75, 'figure.figsize': (14, 8), 'axes.labelsize': size, 'axes.titlesize': size,
           'xtick.labelsize': size * 0.75, 'ytick.labelsize': size * 0.75}
 plt.rcParams.update(params)
-y_true = lambda x: 2 * x + 3
-x_vec = np.array([i for i in range(1, 31)])
-sigma = 10
-x_prediction = 40
-
-
-def simplest_design_matrix(x_vec):
-    return np.array([np.ones(len(x_vec)), x_vec]).T
-
-
-def hat_matrix(design_matrix):
-    X = design_matrix
-    return X @ np.linalg.inv(X.T @ X) @ X.T
-
-
-def calc_influence(design_matrix):
-    H = hat_matrix(design_matrix)
-    return np.array([np.sqrt(1 - H[i, i]) for i in range(len(H))])
-
-
-def std_estimator(residuals, dof):
-    # dof = degrees of freedom
-    std_square = (1 / (len(residuals) - dof)) * np.sum(np.square(residuals))
-    return np.sqrt(std_square)
-
-
-def sampled_noise():
-    # np.random.normal(0, scale=sigma, size=len(x_vec))
-    epsilon_sampled = np.array([1.5696514, 9.70721346, -8.98851826, 16.80501892,
-                                21.49349844, 1.70102863, -8.49491201, 10.56493773,
-                                17.0855639, 1.91983716, 9.89007291, -8.68422734,
-                                3.83159999, -1.46182969, -14.33304104, 1.31011658,
-                                1.1925366, 1.27476029, 0.4110668, 7.13089034,
-                                1.8995182, 6.15586736, -0.67727801, 8.41899763,
-                                -13.39880163, 9.55726545, -3.14007926, -2.10523179,
-                                0.19798023, -11.58942361])
-    return epsilon_sampled
 
 
 def plot_line_noise_and_best_fit(x_vec, x_vec_sampled, y_true, y_with_noise, y_hat):
@@ -53,7 +17,6 @@ def plot_line_noise_and_best_fit(x_vec, x_vec_sampled, y_true, y_with_noise, y_h
 
 
 def demonstrate_straight_line_noise_and_best_fit():
-    epsilon_sampled = sampled_noise()
     y_with_noise = y_true(x_vec) + epsilon_sampled
     y_hat = hat_matrix(simplest_design_matrix(x_vec)) @ y_with_noise.T
 
@@ -66,16 +29,14 @@ def demonstrate_straight_line_noise_and_best_fit():
     plt.savefig('Graphs/Straight_line_noise_and_best_fit')
 
 
-def demonstrate_prediction():
-    epsilon_sampled = sampled_noise()
-    best_fit_params = np.polyfit(x_vec, y_true(x_vec) + epsilon_sampled, 1)
+def demonstrate_prediction(range_size=4 * sigma):
     x_vec_w_predicted_x = np.concatenate((x_vec, [x_prediction]))
     y_hat_w_prediction = np.polyval(best_fit_params, x_vec_w_predicted_x)
     plt.figure()
     plot_line_noise_and_best_fit(x_vec_w_predicted_x, x_vec, y_true, y_true(x_vec) + epsilon_sampled,
                                  y_hat_w_prediction)
     err_keywargs = {'capsize': 10, 'capthick': 3, 'elinewidth': 3, 'linewidth': 3}
-    plt.errorbar(x_prediction, y_hat_w_prediction[-1], yerr=2 * sigma, c='r',
+    plt.errorbar(x_prediction, y_hat_w_prediction[-1], yerr=range_size / 2, c='r',
                  label='Extrapulated value & range', **err_keywargs)
     plt.axis('off')
     plt.savefig('Graphs/prediction_for_cover')
@@ -88,7 +49,27 @@ def demonstrate_prediction():
     plt.savefig('Graphs/Line_noise_best_fit_and_prediction')
 
 
+def plot_0954_CI():
+    # Plots \pm 2 \sigma CI, which is 0.954 CI (95.4%)
+    demonstrate_prediction(range_size=4 * sigma_prediction)
+    x_range = 3.5 * (x_prediction - np.mean(x_vec))
+    x_for_plotting_CI = np.linspace(np.mean(x_vec) - x_range / 2, np.mean(x_vec) + x_range / 2, 2 * len(x_vec))
+    sig_x = np.array(
+        [np.sqrt(var_prediction(simplest_design_matrix(x_vec), sigma, np.array([1, x]))) for x in x_for_plotting_CI])
+
+    y_predicted = np.polyval(best_fit_params, x_for_plotting_CI)
+    plt.plot(x_for_plotting_CI, y_predicted + 2 * sig_x, '--r', label='95.4%CI', **default_plt_kwargs)
+    plt.plot(x_for_plotting_CI, y_predicted - 2 * sig_x, '--r', **default_plt_kwargs)
+    plt.plot(x_for_plotting_CI, y_true(x_for_plotting_CI), '-b', **default_plt_kwargs)
+    plt.plot(x_for_plotting_CI, y_predicted, '-r', **default_plt_kwargs)
+    plt.legend()
+    plt.savefig('Graphs/Analytic_CI')
+    return
+
+
 if __name__ == "__main__":
-    demonstrate_straight_line_noise_and_best_fit()
-    demonstrate_prediction()
+    # demonstrate_straight_line_noise_and_best_fit()
+    # print(sigma_prediction)
+    # demonstrate_prediction(range_size=4 * sigma_prediction)
+    plot_0954_CI()
     plt.show()
