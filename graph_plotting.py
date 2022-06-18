@@ -1,5 +1,4 @@
 from matplotlib import pyplot as plt
-from regression_package import *
 from working_example_global_parameters import *
 
 default_plt_kwargs = {'linewidth': 3, 'markersize': 20}
@@ -9,20 +8,20 @@ params = {'legend.fontsize': size * 0.75, 'figure.figsize': (14, 8), 'axes.label
 plt.rcParams.update(params)
 
 
-def plot_line_noise_and_best_fit(x_vec, x_vec_sampled, y_true, y_with_noise, y_hat):
+def plot_true_line_sample_and_best_fit(x_vec, x_vec_sampled, y_true, y_with_noise, y_hat):
     plt.plot(x_vec, y_true(x_vec), label='True straight line', c='b', **default_plt_kwargs)
     plt.plot(x_vec_sampled, y_with_noise, '.', label='Sampled data, $\\sigma=10$', c='g', zorder=-1,
              **default_plt_kwargs)
     plt.plot(x_vec, y_hat, label='Best fit to sampled data', c='r', **default_plt_kwargs)
 
 
-def demonstrate_straight_line_noise_and_best_fit():
+def wrap_line_sample_and_best_fit_for_figure():
     y_with_noise = y_true(x_vec) + epsilon_sampled
     y_hat = hat_matrix(simplest_design_matrix(x_vec)) @ y_with_noise.T
 
     plt.figure()
     plt.grid()
-    plot_line_noise_and_best_fit(x_vec, x_vec, y_true, y_with_noise, y_hat)
+    plot_true_line_sample_and_best_fit(x_vec, x_vec, y_true, y_with_noise, y_hat)
     plt.legend()
     plt.xlabel('x')
     plt.ylabel('y')
@@ -33,8 +32,8 @@ def demonstrate_prediction(range_size=4 * sigma):
     x_vec_w_predicted_x = np.concatenate((x_vec, [x_prediction]))
     y_hat_w_prediction = np.polyval(best_fit_params, x_vec_w_predicted_x)
     plt.figure()
-    plot_line_noise_and_best_fit(x_vec_w_predicted_x, x_vec, y_true, y_true(x_vec) + epsilon_sampled,
-                                 y_hat_w_prediction)
+    plot_true_line_sample_and_best_fit(x_vec_w_predicted_x, x_vec, y_true, y_true(x_vec) + epsilon_sampled,
+                                       y_hat_w_prediction)
     err_keywargs = {'capsize': 10, 'capthick': 3, 'elinewidth': 3, 'linewidth': 3}
     plt.errorbar(x_prediction, y_hat_w_prediction[-1], yerr=range_size / 2, c='r',
                  label='Extrapulated value & range', **err_keywargs)
@@ -68,8 +67,8 @@ def plot_0954_CI():
 
 
 if __name__ == "__main__":
-    # demonstrate_straight_line_noise_and_best_fit()
-    # print(sigma_prediction)
-    # demonstrate_prediction(range_size=4 * sigma_prediction)
+    wrap_line_sample_and_best_fit_for_figure()
+    print(sigma_prediction)
+    demonstrate_prediction(range_size=4 * sigma_prediction)
     plot_0954_CI()
     plt.show()
