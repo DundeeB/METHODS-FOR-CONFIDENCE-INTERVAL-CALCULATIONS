@@ -31,4 +31,5 @@ def analytic_solution_CI(x_vec, sample, x_prediction, CL):
 
 
 if __name__ == "__main__":
-    print('Analytic solution; percentage of times range includes true value is ' + str(MC_test_CI(analytic_solution_CI)))
+    print('Analytic solution; percentage of times range includes true value is ' + \
+          str(np.round(MC_test_CI(analytic_solution_CI), 3)))
