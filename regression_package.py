@@ -23,3 +23,9 @@ def std_estimator(residuals, dof):
 
 def var_prediction(design_matrix, sigma, x):
     return (sigma ** 2) * x.T @ np.linalg.inv(design_matrix.T @ design_matrix) @ x
+
+
+def studentized(residuals, influence, dof):
+    sig = std_estimator(residuals, dof)
+    t = residuals / (sig * influence)
+    return t
