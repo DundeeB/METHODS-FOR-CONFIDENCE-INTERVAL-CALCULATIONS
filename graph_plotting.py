@@ -81,9 +81,10 @@ def plot_binomial_Bayes_belief(prior_sample):
         n = len(partial_sample)
         k = np.sum(partial_sample)
         p_q_given_B = (n + 1) * binom(n, k) * (q ** k) * ((1 - q) ** (n - k))
-        plt.plot(q, p_q_given_B, label='n=' + str(n), **default_plt_kwargs)
+        line_style = '-' if n % 2 == 0 else '--'
+        plt.plot(q, p_q_given_B, line_style, label=str(partial_sample), **default_plt_kwargs)
     plt.xlabel('q')
-    plt.ylabel('p(q|' + str(prior_sample) + ')')
+    plt.ylabel('p(q|sample)')
     plt.legend()
     plt.savefig('Graphs/Bayes_Binomial_propagation')
 
