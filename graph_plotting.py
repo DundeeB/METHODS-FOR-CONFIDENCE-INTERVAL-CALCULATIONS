@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from working_example_global_parameters import *
+from scipy.special import binom
 
 default_plt_kwargs = {'linewidth': 3, 'markersize': 20}
 size = 30
@@ -66,9 +67,31 @@ def plot_0954_CI():
     return
 
 
+def plot_binomial_Bayes_belief(prior_sample):
+    """
+    Shows the progress in the posterior of sampling from binomial distributation, when the prior is constant over [0,1]
+    :param prior_sample:
+    :return:
+    """
+    q = np.linspace(0, 1)
+    plt.figure()
+    plt.plot(q, 1 + 0 * q, label='prior', **default_plt_kwargs)
+    for partial_sample_length in range(1, len(prior_sample) + 1):
+        partial_sample = prior_sample[:partial_sample_length]
+        n = len(partial_sample)
+        k = np.sum(partial_sample)
+        p_q_given_B = (n + 1) * binom(n, k) * (q ** k) * ((1 - q) ** (n - k))
+        plt.plot(q, p_q_given_B, label='n=' + str(n), **default_plt_kwargs)
+    plt.xlabel('q')
+    plt.ylabel('p(q|' + str(prior_sample) + ')')
+    plt.legend()
+    plt.savefig('Graphs/Bayes_Binomial_propagation')
+
+
 if __name__ == "__main__":
-    wrap_line_sample_and_best_fit_for_figure()
-    print(sigma_prediction)
-    demonstrate_prediction(range_size=4 * sigma_prediction)
-    plot_0954_CI()
+    # wrap_line_sample_and_best_fit_for_figure()
+    # print(sigma_prediction)
+    # demonstrate_prediction(range_size=4 * sigma_prediction)
+    # plot_0954_CI()
+    plot_binomial_Bayes_belief([0, 1, 0, 1, 0, 1])
     plt.show()
