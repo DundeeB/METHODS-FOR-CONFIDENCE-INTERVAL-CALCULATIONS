@@ -15,6 +15,6 @@ epsilon_sampled = np.array([1.5696514, 9.70721346, -8.98851826, 16.80501892,
                             1.8995182, 6.15586736, -0.67727801, 8.41899763,
                             -13.39880163, 9.55726545, -3.14007926, -2.10523179,
                             0.19798023, -11.58942361])
-
-best_fit_params = np.polyfit(x_vec, y_true(x_vec) + epsilon_sampled, 1)
+y_sampled = y_true(x_vec) + epsilon_sampled
+best_fit_params = np.polyfit(x_vec, y_sampled, 1)
 sigma_prediction = np.sqrt(var_prediction(simplest_design_matrix(x_vec), sigma, np.array([1, x_prediction])))

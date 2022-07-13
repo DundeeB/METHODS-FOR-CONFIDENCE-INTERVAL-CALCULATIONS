@@ -1,6 +1,9 @@
 from matplotlib import pyplot as plt
 from working_example_global_parameters import *
 from scipy.special import binom
+from Monte_Carlo_test_CI import MC_test_Bayesian_Binomial_CI
+import pymc as pm
+import arviz as az
 
 default_plt_kwargs = {'linewidth': 3, 'markersize': 20}
 size = 30
@@ -17,12 +20,11 @@ def plot_true_line_sample_and_best_fit(x_vec, x_vec_sampled, y_true, y_with_nois
 
 
 def wrap_line_sample_and_best_fit_for_figure():
-    y_with_noise = y_true(x_vec) + epsilon_sampled
-    y_hat = hat_matrix(simplest_design_matrix(x_vec)) @ y_with_noise.T
+    y_hat = hat_matrix(simplest_design_matrix(x_vec)) @ y_sampled.T
 
     plt.figure()
     plt.grid()
-    plot_true_line_sample_and_best_fit(x_vec, x_vec, y_true, y_with_noise, y_hat)
+    plot_true_line_sample_and_best_fit(x_vec, x_vec, y_true, y_sampled, y_hat)
     plt.legend()
     plt.xlabel('x')
     plt.ylabel('y')
@@ -33,7 +35,7 @@ def demonstrate_prediction(range_size=4 * sigma):
     x_vec_w_predicted_x = np.concatenate((x_vec, [x_prediction]))
     y_hat_w_prediction = np.polyval(best_fit_params, x_vec_w_predicted_x)
     plt.figure()
-    plot_true_line_sample_and_best_fit(x_vec_w_predicted_x, x_vec, y_true, y_true(x_vec) + epsilon_sampled,
+    plot_true_line_sample_and_best_fit(x_vec_w_predicted_x, x_vec, y_true, y_sampled,
                                        y_hat_w_prediction)
     err_keywargs = {'capsize': 10, 'capthick': 3, 'elinewidth': 3, 'linewidth': 3}
     plt.errorbar(x_prediction, y_hat_w_prediction[-1], yerr=range_size / 2, c='r',
@@ -89,10 +91,43 @@ def plot_binomial_Bayes_belief(prior_sample):
     plt.savefig('Graphs/Bayes_Binomial_propagation')
 
 
+def Bayesian_Binomial_CL_as_func_n():
+    n_array = [int(x) for x in 10 ** np.array(np.linspace(0.5, 4, 12))]
+    # n_array = range(5, 15)
+    plt.figure()
+    plt.semilogx(n_array, [0.95 for _ in n_array], '-k', linewidth=5)
+    for true_q in [0.04, 0.4, 0.6, 0.96]:
+        CL_array = np.zeros(len(n_array))
+        for i, n in enumerate(n_array):
+            CL_array[i] = MC_test_Bayesian_Binomial_CI(n, true_q, realizations=int(1e4))
+        plt.semilogx(n_array, CL_array, '.--', label='$q_*=$' + str(true_q), **default_plt_kwargs)
+    plt.legend()
+    plt.xlabel('n')
+    plt.ylabel('MC calculated CL (for 95%HDI)')
+    plt.grid()
+    plt.ylim([0.87, 1.01])
+    plt.savefig('Graphs/Bayesian_Binomial_MC_CL_vs_n')
+
+
+def plot_Bayesian_regression():
+    mu_a, mu_b, sig_a, sig_b = 0, 0, 5, 5
+    with pm.Model() as model:
+        a = pm.Normal("a", mu=mu_a, sigma=sig_a)
+        b = pm.Normal("b", mu=mu_b, sigma=sig_b)
+        pm.Normal("obs", mu=a * x_vec + b, sigma=sigma, observed=y_sampled)
+        linear_fit = pm.sample()
+    axes = az.plot_posterior(linear_fit, show=True)
+    fig = axes.ravel()[0].figure
+    fig.savefig('Graphs/Bayesian_inferrence_regression_belief_on_a_b_from_working_example')
+    return
+
+
 if __name__ == "__main__":
     # wrap_line_sample_and_best_fit_for_figure()
     # print(sigma_prediction)
     # demonstrate_prediction(range_size=4 * sigma_prediction)
     # plot_0954_CI()
-    plot_binomial_Bayes_belief([0, 1, 0, 1, 0, 1])
+    # plot_binomial_Bayes_belief([0, 1, 0, 1, 0, 1])
+    Bayesian_Binomial_CL_as_func_n()
+    # plot_Bayesian_regression()
     plt.show()

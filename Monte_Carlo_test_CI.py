@@ -1,5 +1,7 @@
 from working_example_global_parameters import *
 from scipy.stats import norm
+from scipy.special import betaincinv
+import pymc as pm
 
 
 def MC_test_CI(CI_func_from_sample, realizations=int(1e5), CL=95.4 / 100, y_true=y_true, x_vec=x_vec,
@@ -30,6 +32,46 @@ def analytic_solution_CI(x_vec, sample, x_prediction, CL):
             prediction + num_of_sigmas_from_CL * sigma_prediction]
 
 
+def Bayesian_Binomial_CI(n, k, CL=0.95):
+    # Given the constant prior p(q)=1, and given k = np.sum(B) and n=len(B), we have:
+    # p(q|B)=(n+1)(n choose k)q^k(1-q)^(n-k)
+    # And so we need to solve for q_d, q_u, s.t. int from q_d to q_u of p(q|B) = 0.95. This define our 95CI. The result
+    # is expressed using the betaincinv function
+    # q_from_x = lambda x: betaincinv(k + 1, n - k + 1, x / (n + 1))
+    q_from_x = lambda x: betaincinv(k + 1, n - k + 1, x)
+    return q_from_x((1 - CL) / 2), q_from_x(CL + (1 - CL) / 2)
+
+
+def MC_test_Bayesian_Binomial_CI(n, true_q, realizations=int(1e4)):
+    """
+    :param n: length of Binomial sample
+    :param true_q: the parameter of the Binomial distribution
+    :param realizations: number of realizations used in the monte carlo calculation
+    :return: the CL, calculated from the MC realizations.
+    """
+    counter = 0
+    for real in range(realizations):
+        CI = Bayesian_Binomial_CI(n, np.random.binomial(n, true_q))
+        if CI[0] <= true_q <= CI[1]:
+            counter += 1
+    return float(counter) / realizations
+
+
+def Bayesian_CI_for_linear_regression(x_vec, sample, x_prediction, CL):
+    mu_a, mu_b, sig_a, sig_b = 0, 0, 10, 10
+    with pm.Model() as model:
+        a = pm.Normal("a", mu=mu_a, sigma=sig_a)
+        b = pm.Normal("b", mu=mu_b, sigma=sig_b)
+        pm.Normal("obs", mu=a * x_vec + b, sigma=sigma, observed=sample)
+        linear_fit = pm.sample()
+    return
+
+
 if __name__ == "__main__":
     print('Analytic solution; percentage of times range includes true value is ' + \
           str(np.round(MC_test_CI(analytic_solution_CI), 3)))
+
+    true_q = 0.75
+    n = 10000
+    print('Bayesian Binomial; percentage of times range includes true value is ' + \
+          str(np.round(MC_test_Bayesian_Binomial_CI(n, true_q), 3)))
