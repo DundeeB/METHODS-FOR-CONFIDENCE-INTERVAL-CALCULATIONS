@@ -114,11 +114,13 @@ def plot_Bayesian_regression():
     with pm.Model() as model:
         a = pm.Normal("a", mu=mu_a, sigma=sig_a)
         b = pm.Normal("b", mu=mu_b, sigma=sig_b)
+        prediction = pm.Deterministic("prediction", a * x_prediction + b)
         pm.Normal("obs", mu=a * x_vec + b, sigma=sigma, observed=y_sampled)
         linear_fit = pm.sample()
-    axes = az.plot_posterior(linear_fit, show=True)
+    axes = az.plot_posterior(linear_fit, show=True, hdi_prob=0.95)
     fig = axes.ravel()[0].figure
     fig.savefig('Graphs/Bayesian_inferrence_regression_belief_on_a_b_from_working_example')
+    print(np.array(az.hdi(linear_fit, hdi_prob=.95,var_names='prediction').to_array())[0])
     return
 
 
@@ -128,6 +130,6 @@ if __name__ == "__main__":
     # demonstrate_prediction(range_size=4 * sigma_prediction)
     # plot_0954_CI()
     # plot_binomial_Bayes_belief([0, 1, 0, 1, 0, 1])
-    Bayesian_Binomial_CL_as_func_n()
-    # plot_Bayesian_regression()
+    # Bayesian_Binomial_CL_as_func_n()
+    plot_Bayesian_regression()
     plt.show()

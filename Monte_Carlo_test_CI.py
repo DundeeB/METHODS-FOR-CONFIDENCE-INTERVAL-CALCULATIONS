@@ -2,6 +2,7 @@ from working_example_global_parameters import *
 from scipy.stats import norm
 from scipy.special import betaincinv
 import pymc as pm
+from arviz import hdi
 
 
 def MC_test_CI(CI_func_from_sample, realizations=int(1e5), CL=95.4 / 100, y_true=y_true, x_vec=x_vec,
@@ -62,16 +63,20 @@ def Bayesian_CI_for_linear_regression(x_vec, sample, x_prediction, CL):
     with pm.Model() as model:
         a = pm.Normal("a", mu=mu_a, sigma=sig_a)
         b = pm.Normal("b", mu=mu_b, sigma=sig_b)
+        pm.Deterministic("prediction", a * x_prediction + b)
         pm.Normal("obs", mu=a * x_vec + b, sigma=sigma, observed=sample)
         linear_fit = pm.sample()
-    return
+    return np.array(hdi(linear_fit, hdi_prob=CL, var_names="prediction").to_array())[0]
 
 
 if __name__ == "__main__":
-    print('Analytic solution; percentage of times range includes true value is ' + \
-          str(np.round(MC_test_CI(analytic_solution_CI), 3)))
+    # print('Analytic solution; percentage of times range includes true value is ' + \
+    #       str(np.round(MC_test_CI(analytic_solution_CI), 3)))
 
-    true_q = 0.75
-    n = 10000
-    print('Bayesian Binomial; percentage of times range includes true value is ' + \
-          str(np.round(MC_test_Bayesian_Binomial_CI(n, true_q), 3)))
+    # true_q = 0.75
+    # n = 10000
+    # print('Bayesian Binomial; percentage of times range includes true value is ' + \
+    #       str(np.round(MC_test_Bayesian_Binomial_CI(n, true_q), 3)))
+
+    print('Bayesian credible interval; percentage of times interval includes true value is ' + \
+          str(np.round(MC_test_CI(Bayesian_CI_for_linear_regression, realizations=10, CL=.95), 3)))
